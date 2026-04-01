@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOXITY — Cotation LLD</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --black:#000;--black2:#1A1A1A;--bg:#F5F5F5;--bg2:#EBEBEB;--white:#fff;
+  --green:#6FB014;--green2:#5A9010;--green3:#3D6009;
+  --green-bg:#EFF7E3;--green-border:#B5D97A;
+  --border:#CCC;--border2:#AAA;
+  --text:#111;--text2:#444;--text3:#888;
+  --amber:#8A6200;--amber-bg:#FFF8E6;--amber-border:#E8C870;
+  --red:#B01414;--red-bg:#FAEAEA;--red-border:#E8A0A0;--red-text:#8A0E0E;
+  --mono:'DM Mono',monospace;--ui:'Cairo',sans-serif;--r:6px;--rl:10px;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--ui);font-size:14px;min-height:100vh}
+
+/* ── HEADER ── */
+header{background:var(--black);padding:0 24px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:100}
+.logo{font-size:20px;font-weight:900;color:#fff;margin-right:8px}.logo span{color:var(--green)}
+.logo-sep{width:1px;height:16px;background:rgba(255,255,255,.2);margin:0 10px}
+.logo-sub{font-size:10px;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.8px;margin-right:32px}
+nav{display:flex;gap:2px;flex:1}
+.tab-btn{background:none;border:none;color:rgba(255,255,255,.5);font-family:var(--ui);font-size:12px;font-weight:700;padding:6px 14px;border-radius:var(--r);cursor:pointer;transition:all .15s}
+.tab-btn:hover{background:rgba(255,255,255,.1);color:#fff}
+.tab-btn.active{background:var(--green);color:#fff}
+.print-btn{margin-left:auto;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;font-family:var(--ui);font-size:12px;font-weight:700;padding:6px 16px;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s}
+.print-btn:hover{background:var(--green);border-color:var(--green)}
+.print-btn svg{flex-shrink:0}
+
+/* ── LAYOUT ── */
+main{padding:18px 22px;max-width:1600px;margin:0 auto}
+.tab-section{display:none}.tab-section.active{display:block}
+
+/* ── KPI STRIP ── */
+.kpi-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+.kpi{background:var(--white);border:1px solid var(--border);border-radius:var(--rl);padding:14px 16px;border-top:3px solid transparent}
+.kpi.k1{border-top-color:var(--green)}.kpi.k2{border-top-color:var(--black2)}.kpi.k3{border-top-color:#888}
+.kpi-tag{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:5px}
+.kpi-val{font-size:24px;font-weight:900;font-family:var(--mono);color:var(--text);line-height:1}
+.kpi-val.g{color:var(--green2)}.kpi-val.a{color:var(--amber)}.kpi-val.r{color:var(--red)}.kpi-val.na{color:var(--text3);font-size:16px;font-weight:400}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:4px}
+
+/* ── DECISION ── */
+.decision{border-radius:var(--rl);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;border:1.5px solid;transition:all .2s}
+.decision.g{background:var(--green-bg);border-color:var(--green-border)}
+.decision.a{background:var(--amber-bg);border-color:var(--amber-border)}
+.decision.r{background:var(--red-bg);border-color:var(--red-border)}
+.decision.none{display:none}
+.d-dot{width:8px;height:8px;border-radius:50%;margin-right:10px;flex-shrink:0}
+.decision.g .d-dot{background:var(--green)}.decision.a .d-dot{background:var(--amber)}.decision.r .d-dot{background:var(--red)}
+.d-title{font-size:13px;font-weight:700}
+.decision.g .d-title{color:var(--green2)}.decision.a .d-title{color:var(--amber)}.decision.r .d-title{color:var(--red)}
+.d-sub{font-size:11px;color:var(--text2);margin-top:1px}
+.d-right{font-family:var(--mono);font-size:11px;color:var(--text2);text-align:right}
+
+/* ── MAIN GRID ── */
+.cot-grid{display:grid;grid-template-columns:380px 1fr;gap:16px;align-items:start}
+.right-col{display:flex;flex-direction:column;gap:14px}
+
+/* ── CARDS ── */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--rl);padding:16px}
+.card-sm{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:13px}
+.sh{font-size:10px;font-weight:700;color:var(--green2);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;padding-bottom:5px;border-bottom:2px solid var(--bg)}
+.sh:first-child{margin-top:0}
+
+/* ── FORM ── */
+label{font-size:12px;color:var(--text2);font-weight:600;display:block;margin-bottom:3px}
+input[type=number],input[type=text],input[type=date],select{
+  width:100%;background:var(--white);border:1px solid var(--border);border-radius:var(--r);
+  color:var(--text);font-family:var(--ui);font-size:13px;padding:6px 9px;outline:none;transition:border-color .15s
+}
+input[type=number]{font-family:var(--mono)}
+input:focus,select:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(111,176,20,.1)}
+.field{margin-bottom:9px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.field-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.hint{font-size:10px;color:var(--text3);margin-top:2px;font-style:italic}
+
+/* ── VN/VO TOGGLE ── */
+.vn-vo{display:flex;gap:0;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:10px}
+.vn-vo-btn{flex:1;background:var(--bg);border:none;font-family:var(--ui);font-size:13px;font-weight:700;padding:7px;cursor:pointer;transition:all .15s;color:var(--text2)}
+.vn-vo-btn.active{background:var(--black);color:#fff}
+.vo-km-wrap{display:none}
+.vo-km-wrap.show{display:block}
+.vo-warn{background:var(--red-bg);border:1px solid var(--red-border);border-radius:var(--r);padding:7px 10px;font-size:11px;color:var(--red-text);font-weight:600;margin-top:6px;display:none}
+.vo-warn.show{display:block}
+.vo-coeff-badge{display:inline-block;background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:20px;font-size:10px;font-weight:700;color:var(--amber);padding:2px 8px;margin-left:6px}
+
+/* ── TF BOX ── */
+.tf-box{background:var(--black);border-radius:var(--r);padding:9px 12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.tf-lbl{font-size:10px;color:rgba(255,255,255,.5);font-weight:700;text-transform:uppercase;letter-spacing:.8px}
+.tf-val{font-family:var(--mono);font-size:16px;font-weight:700;color:#fff}
+
+/* ── RESULTS ── */
+.rr{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--bg)}
+.rr:last-child{border-bottom:none}
+.rl{font-size:12px;color:var(--text2);font-weight:600}
+.rl small{font-size:10px;color:var(--text3);display:block;margin-top:1px;font-weight:400}
+.rv{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text)}
+.rv.pos{color:var(--green2)}.rv.neg{color:var(--red)}.rv.na{color:var(--text3);font-weight:400}
+.rhl{background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--r);padding:10px 12px;margin:8px 0}
+.rhl .hl-tag{font-size:10px;font-weight:700;color:var(--green3);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.rhl .hl-val{font-family:var(--mono);font-size:19px;font-weight:900;color:var(--green2)}
+.rhl .hl-sub{font-size:10px;color:var(--text3);margin-top:2px}
+.rhl.dark{background:var(--bg);border-color:var(--border2)}
+.rhl.dark .hl-tag{color:var(--black2)}.rhl.dark .hl-val{color:var(--black)}
+.divider{height:1px;background:var(--bg);margin:10px 0}
+
+/* ── TABLES ── */
+.fin-wrap{overflow-x:auto}
+table.fin{width:100%;border-collapse:collapse;font-size:12px}
+.fin th{background:var(--black);color:rgba(255,255,255,.8);padding:8px 10px;text-align:center;border:1px solid rgba(255,255,255,.06);font-size:11px;font-weight:700}
+.fin th.rh{text-align:left;width:90px;color:rgba(255,255,255,.55)}
+.fin td{border:1px solid var(--border);padding:0;vertical-align:middle}
+.fin td.dur-c{background:var(--bg);font-weight:700;color:var(--black);font-size:12px;text-align:left;padding:9px 12px}
+.fin .fc{cursor:pointer;transition:background .1s;padding:8px 10px;text-align:center}
+.fin .fc:hover{background:var(--green-bg)}
+.fin .fc.sel{outline:2.5px solid var(--green);outline-offset:-2px;background:var(--green-bg)}
+.fc-mens{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--black);display:block}
+.fc-usage{font-size:10px;color:var(--text3);margin-top:2px;display:block}
+.fc-usage.warn{color:var(--amber)}.fc-usage.hi{color:var(--red)}
+.fc-coeff{font-size:10px;color:var(--green2);margin-top:2px;display:block;font-weight:600}
+table.mg{width:100%;border-collapse:collapse;font-size:12px}
+.mg th{background:var(--black2);color:rgba(255,255,255,.8);padding:7px 10px;text-align:center;border:1px solid rgba(255,255,255,.06);font-size:11px;font-weight:700}
+.mg th.rh{text-align:left;color:rgba(255,255,255,.55)}
+.mg td{border:1px solid var(--border);padding:0;vertical-align:middle}
+.mg td.dur-c{background:var(--bg);font-weight:700;color:var(--black);font-size:12px;text-align:left;padding:8px 12px}
+.mg .mc{cursor:pointer;transition:filter .1s;padding:8px 10px;text-align:center}
+.mg .mc:hover{filter:brightness(.93)}
+.mg .mc.sel{outline:2.5px solid var(--green);outline-offset:-2px;font-weight:800}
+.mg .mc.g{background:var(--green-bg);color:var(--green-text,#2D5A08)}.mg .mc.a{background:var(--amber-bg);color:var(--amber)}.mg .mc.r{background:var(--red-bg);color:var(--red-text)}.mg .mc.nd{background:var(--bg);color:var(--text3)}
+.mc-gross{display:block;font-family:var(--mono);font-size:12px;font-weight:600}
+.mc-lbl{display:block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;opacity:.6;margin-top:1px}
+.mc-net{display:block;font-family:var(--mono);font-size:11px;margin-top:3px}
+
+/* ── RECAP ── */
+.recap{background:var(--white);border:2px solid var(--green);border-radius:var(--rl);padding:16px;display:none}
+.recap.show{display:block}
+.recap-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.rc-title{font-size:13px;font-weight:700;color:var(--black)}
+.rc-badge{font-size:11px;font-weight:700;padding:3px 12px;border-radius:20px}
+.rc-badge.g{background:var(--green);color:#fff}.rc-badge.a{background:var(--amber);color:#fff}.rc-badge.r{background:var(--red);color:#fff}
+.rc-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:10px}
+.rki{background:var(--bg);border-radius:var(--r);padding:10px 11px}
+.rki .rk-lbl{font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px}
+.rki .rk-val{font-family:var(--mono);font-size:13px;font-weight:800;color:var(--text)}
+.rki .rk-val.g{color:var(--green2)}.rki .rk-val.r{color:var(--red)}.rki .rk-val.a{color:var(--amber)}
+.mg-boxes{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px}
+.mg-box{border-radius:var(--r);padding:11px 13px}
+.mg-box.green{background:var(--green-bg);border:1px solid var(--green-border)}
+.mg-box.gray{background:var(--bg);border:1px solid var(--border)}
+.mg-box .mb-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.mg-box.green .mb-lbl{color:var(--green3)}
+.mg-box.gray .mb-lbl{color:var(--text3)}
+.mg-box .mb-val{font-family:var(--mono);font-size:20px;font-weight:900}
+.mg-box.gray .mb-val{color:var(--black)}
+.mg-box .mb-sub{font-size:10px;color:var(--text3);margin-top:2px}
+.rc-div{height:1px;background:var(--border);margin:10px 0}
+.rc-det{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.rd .rd-lbl{font-size:10px;color:var(--text3);margin-bottom:1px}
+.rd .rd-val{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text2)}
+/* revente section */
+.rev-section{margin-top:14px;padding-top:12px;border-top:2px solid var(--border)}
+.rev-section .rev-title{font-size:11px;font-weight:700;color:var(--black);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.rev-input-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.rev-input-row label{font-size:12px;color:var(--text2);font-weight:600;margin-bottom:0;white-space:nowrap}
+.rev-input-row input{width:140px;font-family:var(--mono)}
+.rev-result{background:var(--black);border-radius:var(--r);padding:12px 14px;display:none}
+.rev-result.show{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.rv-item .rv-lbl{font-size:10px;color:rgba(255,255,255,.5);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px}
+.rv-item .rv-val{font-family:var(--mono);font-size:15px;font-weight:800}
+
+/* ── BANKING ── */
+.bank-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.bank-card{background:var(--white);border:1px solid var(--border);border-radius:var(--rl);padding:14px}
+.bank-name{font-size:14px;font-weight:900;color:var(--black);margin-bottom:4px}
+.bank-dr{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.bank-dr label{font-size:11px;color:var(--text3);margin-bottom:0;white-space:nowrap}
+.bank-dr input[type=date]{width:130px;font-size:11px;padding:4px 8px}
+table.bt{width:100%;border-collapse:collapse;font-size:11px}
+.bt th{background:var(--black);color:rgba(255,255,255,.8);padding:5px 7px;text-align:center;border:1px solid rgba(255,255,255,.06);font-size:10px;font-weight:700}
+.bt th.vl{text-align:left;width:55px}
+.bt td{border:1px solid var(--border);padding:1px}
+.bt td input{background:transparent;border:none;text-align:center;color:var(--text);font-family:var(--mono);font-size:11px;width:100%;padding:4px 3px;outline:none}
+.bt td input:focus{background:var(--green-bg)}
+.bt .vr-td{background:var(--bg);padding:5px 7px;color:var(--text2);font-weight:700;font-size:10px;font-family:var(--mono)}
+.stale{font-size:10px;color:var(--amber);margin-top:4px;display:none}.stale.show{display:block}
+
+/* ── PARAMS ── */
+.pg{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.pr{margin-bottom:13px}
+.pr label{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:5px;font-weight:600}
+.pr label span{font-family:var(--mono);font-weight:700;color:var(--black)}
+input[type=range]{width:100%;accent-color:var(--green);cursor:pointer}
+.cat-t{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+.cat-t th{background:var(--black);color:rgba(255,255,255,.8);padding:5px 10px;text-align:left;font-size:11px;font-weight:700}
+.cat-t td{border-bottom:1px solid var(--bg);padding:5px 10px}
+.cat-t td input{width:72px;font-family:var(--mono);font-size:12px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;outline:none}
+.cat-t td input:focus{border-color:var(--green)}
+.vo-t{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+.vo-t th{background:var(--black);color:rgba(255,255,255,.8);padding:5px 10px;text-align:left;font-size:11px;font-weight:700}
+.vo-t td{border-bottom:1px solid var(--bg);padding:5px 10px}
+.vo-t td input{width:72px;font-family:var(--mono);font-size:12px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;outline:none}
+
+/* ── BUTTONS ── */
+.btn{background:var(--green);border:none;color:#fff;font-family:var(--ui);font-size:13px;font-weight:700;padding:8px 16px;border-radius:var(--r);cursor:pointer;transition:background .15s}
+.btn:hover{background:var(--green2)}
+.btn-g{background:var(--white);border:1px solid var(--border);color:var(--text2);font-family:var(--ui);font-size:12px;padding:6px 12px;border-radius:var(--r);cursor:pointer;font-weight:600;transition:all .15s}
+.btn-g:hover{border-color:var(--green);color:var(--green2)}
+.saved{font-size:12px;color:var(--green2);margin-left:12px;display:none;font-weight:600}
+.tbl-title{font-size:13px;font-weight:700;color:var(--black);margin-bottom:3px}
+.footnote{font-size:10px;color:var(--text3);margin-top:6px;line-height:1.5}
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.li{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)}
+.ld{width:10px;height:10px;border-radius:2px}
+
+/* ═══════════════ PRINT ═══════════════ */
+@media print{
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{background:#fff;font-size:11px;font-family:'Cairo',sans-serif}
+  header,.print-btn,nav,.tab-btn{display:none!important}
+  #tab-banking,#tab-params{display:none!important}
+  #tab-cotation{display:block!important}
+  main{padding:0;max-width:none}
+  .kpi-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+  .kpi{padding:10px;border-top-width:2px}
+  .kpi-val{font-size:18px}
+  .decision{margin-bottom:10px;padding:8px 12px}
+  .cot-grid{display:grid;grid-template-columns:320px 1fr;gap:12px}
+  .right-col{gap:10px}
+  .card,.card-sm,.recap{border:1px solid #ccc;box-shadow:none;break-inside:avoid}
+  .fin-wrap,.fin-wrap *{overflow:visible!important}
+  .recap{display:block!important;border-color:#6FB014}
+  .recap.show{display:block!important}
+  .rev-result.show{display:grid!important}
+  .mg-boxes{margin-bottom:8px}
+  .mg-box .mb-val{font-size:16px}
+  .print-header{display:block!important}
+  .coeff-note{display:none}
+  @page{margin:12mm;size:A4 landscape}
+}
+/* Print header (hidden on screen) */
+.print-header{display:none;margin-bottom:12px;padding-bottom:10px;border-bottom:3px solid #000}
+.print-header-inner{display:flex;justify-content:space-between;align-items:flex-end}
+.print-logo{font-size:22px;font-weight:900;font-family:'Cairo',sans-serif}
+.print-logo span{color:#6FB014}
+.print-meta{font-size:11px;color:#444;text-align:right}
+.print-vehicle{font-size:14px;font-weight:700;margin-top:4px;color:#000}
+
+/* ── SIMULATEUR TAB ── */
+.sim-section{margin-bottom:20px}
+.sim-title{font-size:14px;font-weight:700;color:var(--black);margin-bottom:6px}
+.sim-sub{font-size:11px;color:var(--text2);margin-bottom:14px;line-height:1.6}
+.ref-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px}
+.ref-table th{background:var(--black);color:rgba(255,255,255,.8);padding:7px 12px;text-align:center;font-size:11px;font-weight:700}
+.ref-table th.lh{text-align:left}
+.ref-table td{border:1px solid var(--border);padding:8px 12px;text-align:center}
+.ref-table td.lh{text-align:left;font-weight:600;color:var(--black)}
+.ref-table .badge-down{background:var(--green-bg);color:var(--green2);border:1px solid var(--green-border);border-radius:20px;font-size:10px;font-weight:700;padding:2px 8px;display:inline-block}
+.sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.loyer-table{width:100%;border-collapse:collapse;font-size:12px}
+.loyer-table th{background:var(--black);color:rgba(255,255,255,.8);padding:7px 10px;text-align:center;font-size:11px;font-weight:700}
+.loyer-table th.lh{text-align:left;width:130px}
+.loyer-table td{border:1px solid var(--border);padding:7px 10px;text-align:center;vertical-align:middle}
+.loyer-table td.lh{text-align:left;font-weight:700;color:var(--black);background:var(--bg)}
+.loyer-ok{background:var(--green-bg);color:var(--green2)}
+.loyer-warn{background:var(--amber-bg);color:var(--amber)}
+.loyer-ko{background:var(--red-bg);color:var(--red-text)}
+.loyer-val{font-family:var(--mono);font-size:12px;font-weight:700;display:block}
+.loyer-delta{font-size:10px;margin-top:2px;display:block;font-weight:600}
+.loyer-needed{font-family:var(--mono);font-size:11px;color:var(--text2);display:block;margin-top:2px}
+.notif-box{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:var(--r);padding:10px 13px;font-size:11px;color:var(--amber);font-weight:600;margin-top:10px;display:none}
+.notif-box.show{display:block}
+.notif-box.green{background:var(--green-bg);border-color:var(--green-border);color:var(--green2)}
+.seuil-note{font-size:11px;color:var(--text3);margin-bottom:10px;padding:8px 10px;background:var(--bg);border-radius:var(--r);border-left:3px solid var(--green)}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">LOX<span>ITY</span></span>
+  <span class="logo-sep"></span>
+  <span class="logo-sub">Cotation LLD</span>
+  <nav>
+    <button class="tab-btn active" onclick="switchTab('cotation',this)">Cotation</button>
+    <button class="tab-btn" onclick="switchTab('banking',this)">Barèmes</button>
+    <button class="tab-btn" onclick="switchTab('params',this)">Paramètres</button>
+    <button class="tab-btn" onclick="switchTab('simulateur',this)">Simulateur loyer</button>
+  </nav>
+  <button class="print-btn" onclick="doPrint()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+    Imprimer / PDF
+  </button>
+</header>
+
+<main>
+<!-- ═══ COTATION ═══ -->
+<section id="tab-cotation" class="tab-section active">
+
+  <!-- Print header -->
+  <div class="print-header">
+    <div class="print-header-inner">
+      <div>
+        <div class="print-logo">LOX<span>ITY</span></div>
+        <div class="print-vehicle" id="print-vehicle-line">—</div>
+      </div>
+      <div class="print-meta">
+        <div><strong>Client :</strong> <span id="print-client">—</span></div>
+        <div><strong>Date :</strong> <span id="print-date">—</span></div>
+        <div style="margin-top:4px;font-size:10px;color:#888">Document confidentiel · Loxity</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI strip -->
+  <div class="kpi-strip">
+    <div class="kpi k1"><div class="kpi-tag">Marge nette leasing pur</div><div class="kpi-val na" id="k-lease">—</div><div class="kpi-sub">Loyer − mensualité − coût d'usage</div></div>
+    <div class="kpi k2"><div class="kpi-tag">Marge revente estimée</div><div class="kpi-val na" id="k-revente">—</div><div class="kpi-sub">Prix revente − VNC sortie</div></div>
+    <div class="kpi k3"><div class="kpi-tag">Marge dossier totale</div><div class="kpi-val na" id="k-total">—</div><div class="kpi-sub">Leasing pur + marge revente</div></div>
+  </div>
+
+  <!-- Decision -->
+  <div class="decision none" id="decision">
+    <div style="display:flex;align-items:center"><div class="d-dot"></div><div><div class="d-title" id="d-title">—</div><div class="d-sub" id="d-sub">—</div></div></div>
+    <div class="d-right" id="d-right">—</div>
+  </div>
+
+  <div class="cot-grid">
+    <!-- LEFT PANEL -->
+    <div class="card">
+
+      <!-- IDENTITÉ DOSSIER -->
+      <div class="sh">Identification du dossier</div>
+      <div class="field"><label>Client</label><input type="text" id="client" placeholder="Nom du client / société" oninput="updatePrintMeta()"></div>
+      <div class="field-row3">
+        <div class="field"><label>Marque</label><input type="text" id="marque" placeholder="ex: Citroën" oninput="updatePrintMeta()"></div>
+        <div class="field"><label>Modèle</label><input type="text" id="modele" placeholder="ex: Berlingo" oninput="updatePrintMeta()"></div>
+        <div class="field"><label>Version</label><input type="text" id="version" placeholder="ex: BlueHDi 100" oninput="updatePrintMeta()"></div>
+      </div>
+
+      <!-- VN / VO -->
+      <div class="sh">Type de véhicule</div>
+      <div class="vn-vo">
+        <button class="vn-vo-btn active" id="btn-vn" onclick="setType('VN')">VN — Véhicule neuf</button>
+        <button class="vn-vo-btn" id="btn-vo" onclick="setType('VO')">VO — Occasion</button>
+      </div>
+      <div class="vo-km-wrap" id="vo-km-wrap">
+        <div class="field">
+          <label>KM au départ <span id="vo-coeff-badge" class="vo-coeff-badge" style="display:none"></span></label>
+          <input type="number" id="km-depart" placeholder="Kilométrage obligatoire" step="1000" min="0" oninput="calc()">
+          <div class="hint">Obligatoire pour valider la cotation VO</div>
+        </div>
+        <div class="vo-warn" id="vo-warn">KM de départ obligatoire pour une cotation VO</div>
+      </div>
+
+      <!-- VÉHICULE -->
+      <div class="sh">Véhicule & Financement</div>
+      <div class="field-row">
+        <div class="field"><label>Prix achat HT (€)</label><input type="number" id="prix" placeholder="27 000" step="100" oninput="calc()"></div>
+        <div class="field"><label>Options / équipements HT (€)</label><input type="number" id="options" placeholder="0" step="100" oninput="calc()"></div>
+      </div>
+      <div class="tf-box"><span class="tf-lbl">TO FINANCE</span><span class="tf-val" id="tf">—</span></div>
+      <div class="field">
+        <label>Catégorie véhicule</label>
+        <select id="cat" onchange="calc()">
+          <option value="CITADINE">CITADINE</option><option value="BERLINE">BERLINE</option>
+          <option value="BREAK">BREAK</option><option value="SUV">SUV</option>
+          <option value="VU">VU / SOCIETE</option><option value="4M3" selected>4M3</option>
+          <option value="6M3">6M3</option><option value="10M3">10M3</option>
+          <option value="13M3">13M3</option><option value="15M3">15M3</option>
+          <option value="17M3">17M3</option><option value="20M3">20M3 HAYON</option>
+          <option value="BENNE">BENNE</option><option value="MINIBUS">MINIBUS</option>
+        </select>
+      </div>
+
+      <!-- CONTRAT -->
+      <div class="sh">Contrat</div>
+      <div class="field-row">
+        <div class="field"><label>Durée contrat (mois)</label>
+          <select id="dur-c" onchange="calc()">
+            <option value="12">12 mois</option><option value="24">24 mois</option>
+            <option value="36" selected>36 mois</option><option value="48">48 mois</option><option value="60">60 mois</option>
+          </select>
+        </div>
+        <div class="field"><label>KM / mois</label><input type="number" id="km" placeholder="1 500" step="100" oninput="calc()"></div>
+      </div>
+      <div class="field"><label>Loyer HT cible (€/mois)</label><input type="number" id="loyer" placeholder="650" step="10" oninput="calc()"></div>
+
+      <!-- REVENTE -->
+      <div class="sh">Revente estimée</div>
+      <div class="field"><label>Prix de revente à la sortie (€)</label><input type="number" id="revente" placeholder="Non renseigné" step="100" oninput="calc();syncRevente()"></div>
+
+      <div class="divider"></div>
+      <div class="sh" style="color:var(--black2)">Résultats — scénario sélectionné</div>
+      <div class="rr"><span class="rl">Mensualité bancaire moy.</span><span class="rv" id="r-mens">—</span></div>
+      <div class="rr"><span class="rl">Coût d'usage<small id="r-cout-det">—</small></span><span class="rv neg" id="r-cout">—</span></div>
+      <div class="rhl">
+        <div class="hl-tag">Marge nette leasing pur</div>
+        <div class="hl-val" id="r-lease-hl">—</div>
+        <div class="hl-sub" id="r-lease-sub">Sélectionnez un scénario dans le tableau</div>
+      </div>
+      <div class="rr"><span class="rl">VNC sortie</span><span class="rv" id="r-vnc">—</span></div>
+      <div class="rr"><span class="rl">Marge revente</span><span class="rv" id="r-rev">—</span></div>
+      <div class="rhl dark">
+        <div class="hl-tag">Marge dossier totale</div>
+        <div class="hl-val" id="r-total-hl">—</div>
+        <div class="hl-sub" id="r-total-sub">—</div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-col">
+
+      <!-- FIN TABLE -->
+      <div class="card">
+        <div class="tbl-title">Tableau de financement — Mensualité moy. + Coût d'usage mensuel</div>
+        <div class="footnote" style="margin-bottom:8px">Par durée financement × VR% · Cliquez pour sélectionner · <span class="coeff-note" id="coeff-note"></span></div>
+        <div class="fin-wrap"><table class="fin"><thead><tr><th class="rh">Durée Fi.</th><th>VR 1 %</th><th>VR 5 %</th><th>VR 10 %</th></tr></thead><tbody id="fin-body"></tbody></table></div>
+        <div class="footnote">Mensualité = moyenne banques renseignées dans l'onglet Barèmes</div>
+      </div>
+
+      <!-- MG TABLE -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+          <div>
+            <div class="tbl-title">Tableau des marges mensuelles</div>
+            <div class="footnote">Haut : marge brute (loyer − mensualité) · Bas : marge nette/mois (après coût d'usage)</div>
+          </div>
+          <div class="legend">
+            <div class="li"><div class="ld" style="background:var(--green-bg);border:1px solid var(--green-border)"></div>Rentable</div>
+            <div class="li"><div class="ld" style="background:var(--amber-bg);border:1px solid var(--amber-border)"></div>Limite</div>
+            <div class="li"><div class="ld" style="background:var(--red-bg);border:1px solid var(--red-border)"></div>À refuser</div>
+          </div>
+        </div>
+        <div class="fin-wrap"><table class="mg"><thead><tr><th class="rh">Durée Fi.</th><th>VR 1 %</th><th>VR 5 %</th><th>VR 10 %</th></tr></thead><tbody id="mg-body"></tbody></table></div>
+        <div class="footnote">Couleur selon marge nette · Seuils paramétrables dans l'onglet Paramètres</div>
+      </div>
+
+      <!-- RECAP -->
+      <div class="recap" id="recap">
+        <div class="recap-hd"><div class="rc-title" id="rc-title">Récapitulatif</div><div class="rc-badge" id="rc-badge">—</div></div>
+        <div class="rc-kpis">
+          <div class="rki"><div class="rk-lbl">Mensualité banque</div><div class="rk-val" id="rc-mens">—</div></div>
+          <div class="rki"><div class="rk-lbl">Coût usage total</div><div class="rk-val r" id="rc-cout">—</div></div>
+          <div class="rki"><div class="rk-lbl">Marge leasing pur</div><div class="rk-val" id="rc-lease">—</div></div>
+          <div class="rki"><div class="rk-lbl">Signal</div><div class="rk-val" id="rc-signal">—</div></div>
+        </div>
+        <div class="mg-boxes">
+          <div class="mg-box green">
+            <div class="mb-lbl" style="color:var(--green3)">Marge nette / mois</div>
+            <div class="mb-val" id="rc-mg-mens">—</div>
+            <div class="mb-sub">flux locatif pur</div>
+          </div>
+          <div class="mg-box gray">
+            <div class="mb-lbl">Marge nette / an</div>
+            <div class="mb-val" id="rc-mg-an">—</div>
+            <div class="mb-sub">annualisée</div>
+          </div>
+        </div>
+        <div class="rc-div"></div>
+        <div class="rc-det">
+          <div class="rd"><div class="rd-lbl">Client</div><div class="rd-val" id="rc-client">—</div></div>
+          <div class="rd"><div class="rd-lbl">Véhicule</div><div class="rd-val" id="rc-vehicle">—</div></div>
+          <div class="rd"><div class="rd-lbl">Type</div><div class="rd-val" id="rc-type">—</div></div>
+          <div class="rd"><div class="rd-lbl">TO Finance</div><div class="rd-val" id="rc-tf">—</div></div>
+          <div class="rd"><div class="rd-lbl">VNC sortie</div><div class="rd-val" id="rc-vnc">—</div></div>
+          <div class="rd"><div class="rd-lbl">Loyer HT/mois</div><div class="rd-val" id="rc-loyer">—</div></div>
+          <div class="rd"><div class="rd-lbl">Durée contrat</div><div class="rd-val" id="rc-durc">—</div></div>
+          <div class="rd"><div class="rd-lbl">KM total contrat</div><div class="rd-val" id="rc-km">—</div></div>
+          <div class="rd"><div class="rd-lbl">€/km (coeff. inclus)</div><div class="rd-val" id="rc-ekm">—</div></div>
+          <div class="rd"><div class="rd-lbl">Total loyers perçus</div><div class="rd-val" id="rc-tloyer">—</div></div>
+          <div class="rd"><div class="rd-lbl">Mensualités contrat</div><div class="rd-val" id="rc-tmens">—</div></div>
+          <div class="rd"><div class="rd-lbl">Coût usage</div><div class="rd-val" id="rc-cout2">—</div></div>
+        </div>
+        <!-- REVENTE -->
+        <div class="rev-section">
+          <div class="rev-title">Simulation avec revente</div>
+          <div class="rev-input-row">
+            <label>Prix de revente estimé (€)</label>
+            <input type="number" id="rc-revente-input" placeholder="ex: 9 500" step="100" oninput="updateReventeRecap()">
+          </div>
+          <div class="rev-result" id="rev-result">
+            <div class="rv-item"><div class="rv-lbl">Marge revente</div><div class="rv-val" id="rv-rev">—</div></div>
+            <div class="rv-item"><div class="rv-lbl">Marge leasing</div><div class="rv-val" style="color:rgba(255,255,255,.85)" id="rv-lease">—</div></div>
+            <div class="rv-item"><div class="rv-lbl">MARGE TOTALE</div><div class="rv-val" id="rv-total" style="font-size:19px">—</div></div>
+            <div class="rv-item"><div class="rv-lbl">VNC sortie</div><div class="rv-val" style="color:rgba(255,255,255,.5)" id="rv-vnc">—</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══ BANKING ═══ -->
+<section id="tab-banking" class="tab-section">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div><div style="font-size:16px;font-weight:900;color:var(--black)">Barèmes de financement</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Mensualité pour 100 000 € · Moyenne automatique des banques renseignées</div></div>
+    <button class="btn-g" onclick="resetBanking()">Réinitialiser</button>
+  </div>
+  <div class="bank-grid" id="banking-grid"></div>
+</section>
+
+<!-- ═══ PARAMS ═══ -->
+<section id="tab-params" class="tab-section">
+  <div style="font-size:16px;font-weight:900;color:var(--black);margin-bottom:3px">Paramètres</div>
+  <div style="font-size:12px;color:var(--text2);margin-bottom:18px">Seuils, coûts d'usage et coefficients VO</div>
+  <div class="pg">
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--black);margin-bottom:12px">Seuils de décision — Marge nette leasing pur (€/mois)</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--black)">
+            <th style="color:rgba(255,255,255,.7);padding:6px 10px;text-align:left;font-size:10px;font-weight:700">Durée</th>
+            <th style="color:rgba(255,255,255,.7);padding:6px 10px;text-align:center;font-size:10px;font-weight:700">Seuil VERT</th>
+            <th style="color:rgba(255,255,255,.7);padding:6px 10px;text-align:center;font-size:10px;font-weight:700">Seuil ORANGE</th>
+          </tr></thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--bg)"><td style="padding:6px 10px;font-weight:600">24 mois</td><td style="padding:6px 10px;text-align:center"><input type="number" id="sh24" value="150" min="50" max="500" step="10" style="width:75px;text-align:center" oninput="calc()"></td><td style="padding:6px 10px;text-align:center"><input type="number" id="sb24" value="100" min="30" max="300" step="10" style="width:75px;text-align:center" oninput="calc()"></td></tr>
+            <tr style="border-bottom:1px solid var(--bg)"><td style="padding:6px 10px;font-weight:600">36 mois</td><td style="padding:6px 10px;text-align:center"><input type="number" id="sh36" value="150" min="50" max="500" step="10" style="width:75px;text-align:center" oninput="calc()"></td><td style="padding:6px 10px;text-align:center"><input type="number" id="sb36" value="100" min="30" max="300" step="10" style="width:75px;text-align:center" oninput="calc()"></td></tr>
+            <tr style="border-bottom:1px solid var(--bg)"><td style="padding:6px 10px;font-weight:600">48 mois</td><td style="padding:6px 10px;text-align:center"><input type="number" id="sh48" value="170" min="50" max="500" step="10" style="width:75px;text-align:center" oninput="calc()"></td><td style="padding:6px 10px;text-align:center"><input type="number" id="sb48" value="110" min="30" max="300" step="10" style="width:75px;text-align:center" oninput="calc()"></td></tr>
+            <tr><td style="padding:6px 10px;font-weight:600">60 mois</td><td style="padding:6px 10px;text-align:center"><input type="number" id="sh60" value="200" min="50" max="500" step="10" style="width:75px;text-align:center" oninput="calc()"></td><td style="padding:6px 10px;text-align:center"><input type="number" id="sb60" value="130" min="30" max="300" step="10" style="width:75px;text-align:center" oninput="calc()"></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div style="font-size:13px;font-weight:700;color:var(--black);margin-bottom:12px">Coefficients durée contrat sur €/km</div>
+        <div class="pr"><label>≤ 36 mois <span>× 1,00</span></label></div>
+        <div class="pr"><label>48 mois <span id="c48-val">× 1,10</span></label><input type="range" id="c48" min="1.00" max="1.50" step="0.01" value="1.10" oninput="updateCoeff()"></div>
+        <div class="pr"><label>60 mois <span id="c60-val">× 1,20</span></label><input type="range" id="c60" min="1.00" max="1.80" step="0.01" value="1.20" oninput="updateCoeff()"></div>
+        <div style="font-size:13px;font-weight:700;color:var(--black);margin-top:16px;margin-bottom:12px">Coefficients VO selon KM départ</div>
+        <table class="vo-t">
+          <thead><tr><th>Tranche KM départ</th><th>Surcoût €/km</th></tr></thead>
+          <tbody>
+            <tr><td>0 — 30 000 km</td><td><input type="number" id="vo-c1" value="0" min="0" max="1" step="0.01" style="width:65px" oninput="calc()"> (+ 0%)</td></tr>
+            <tr><td>30 001 — 60 000 km</td><td><input type="number" id="vo-c2" value="0.15" min="0" max="1" step="0.01" style="width:65px" oninput="calc()"> (+ 15%)</td></tr>
+            <tr><td>60 001 — 100 000 km</td><td><input type="number" id="vo-c3" value="0.30" min="0" max="1" step="0.01" style="width:65px" oninput="calc()"> (+ 30%)</td></tr>
+            <tr><td>&gt; 100 000 km</td><td><input type="number" id="vo-c4" value="0.50" min="0" max="1" step="0.01" style="width:65px" oninput="calc()"> (+ 50%)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:var(--black);margin-bottom:10px">Coûts d'usage par catégorie (€/km · base VN ≤ 36 mois)</div>
+      <table class="cat-t"><thead><tr><th>Catégorie</th><th>Défaut</th><th>Actuel</th></tr></thead><tbody id="cat-body"></tbody></table>
+    </div>
+  </div>
+  <div style="margin-top:16px;display:flex;align-items:center;gap:10px">
+    <button class="btn" onclick="saveParams()">Sauvegarder</button>
+    <button class="btn-g" onclick="resetCosts()">Réinitialiser coûts</button>
+    <span class="saved" id="saved">✓ Sauvegardé</span>
+  </div>
+</section>
+
+<!-- ═══ SIMULATEUR ═══ -->
+<section id="tab-simulateur" class="tab-section">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+    <!-- LEFT: Référentiel marché -->
+    <div>
+      <div class="sim-title">Référentiel marché — Évolution du loyer selon la durée</div>
+      <div class="sim-sub">Données indicatives basées sur les pratiques marché LLD professionnelle. La baisse du loyer quand la durée augmente est structurellement inférieure à la baisse de la mensualité bancaire — c'est là que se génère la marge supplémentaire sur les contrats longs.</div>
+      <table class="ref-table">
+        <thead>
+          <tr>
+            <th class="lh">Passage durée</th>
+            <th>Baisse loyer marché</th>
+            <th>Raison principale</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="lh">24 → 36 mois</td>
+            <td><span class="badge-down">−12 à −15 %</span></td>
+            <td style="font-size:11px;color:var(--text2);text-align:left">Dépréciation forte absorbée sur plus de mois</td>
+          </tr>
+          <tr>
+            <td class="lh">36 → 48 mois</td>
+            <td><span class="badge-down">−8 à −10 %</span></td>
+            <td style="font-size:11px;color:var(--text2);text-align:left">Dépréciation ralentit, banque moins exposée</td>
+          </tr>
+          <tr>
+            <td class="lh">48 → 60 mois</td>
+            <td><span class="badge-down">−5 à −7 %</span></td>
+            <td style="font-size:11px;color:var(--text2);text-align:left">Gains limités, risques mécaniques compensent</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="font-size:10px;color:var(--text3);margin-top:6px;font-style:italic">Exemple : loyer 700€/mois à 36m → ~630€ à 48m → ~590€ à 60m</div>
+
+      <div style="margin-top:20px">
+        <div class="sim-title">Lecture stratégique</div>
+        <div class="sim-sub">
+          <strong>36 mois</strong> — La référence. Loyer le plus élevé, marge la plus lisible.<br>
+          <strong>48 mois</strong> — Le meilleur compromis. Mensualité bancaire baisse plus que le loyer → marge nette maximale.<br>
+          <strong>60 mois</strong> — A réserver aux véhicules à forte valeur résiduelle. Risque mécanique à compenser dans le loyer.
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Simulateur loyer cible -->
+    <div>
+      <div class="sim-title">Simulateur — Loyer cible pour atteindre 150 €/mois net</div>
+      <div class="seuil-note">Seuil cible : <strong>150 €/mois</strong> de marge nette leasing pur · Ordre de test : 36m VR1 → 36m VR5 → 36m VR10 → 48m VR1 → ...</div>
+      <div id="sim-no-data" style="color:var(--text3);font-size:12px;padding:20px;text-align:center;background:var(--bg);border-radius:var(--r)">Saisissez le TO Finance, la catégorie et le KM/mois dans l'onglet Cotation pour voir la simulation.</div>
+      <div id="sim-notif" class="notif-box"></div>
+      <div style="overflow-x:auto;margin-top:10px">
+        <table class="loyer-table" id="sim-table" style="display:none">
+          <thead>
+            <tr>
+              <th class="lh">Scénario</th>
+              <th>Mensualité</th>
+              <th>Loyer actuel</th>
+              <th>Loyer cible 150€</th>
+              <th>Ecart</th>
+            </tr>
+          </thead>
+          <tbody id="sim-body"></tbody>
+        </table>
+      </div>
+      <div class="footnote" style="margin-top:8px">Loyer cible = mensualité + coût usage/mois + 150€ · Écart = loyer cible − loyer actuel</div>
+    </div>
+
+  </div>
+</section>
+</main>
+
+<script>
+window.onerror=function(m,s,l,c,e){console.error('[LLD] '+m+' L'+l);return false;};
+
+function sel(id){return document.getElementById(id);}
+function setT(id,v){const e=sel(id);if(e)e.textContent=v;}
+function setC(id,v){const e=sel(id);if(e)e.className=v;}
+
+const BANKS=['BPGO','CMB','LCL','CA','CIC','CE'];
+const DUR_FI=[24,36,48,60,72];
+const VRS=['0.01','0.05','0.10'];
+const VR_LBL={'0.01':'VR 1 %','0.05':'VR 5 %','0.10':'VR 10 %'};
+const DEF_COSTS={CITADINE:0.043,BERLINE:0.047,BREAK:0.050,SUV:0.059,VU:0.043,'4M3':0.055,'6M3':0.065,'10M3':0.089,'13M3':0.101,'15M3':0.125,'17M3':0.140,'20M3':0.158,BENNE:0.173,MINIBUS:0.069};
+const CAT_LBL={CITADINE:'Citadine',BERLINE:'Berline',BREAK:'Break',SUV:'SUV',VU:'VU/Société','4M3':'4M3','6M3':'6M3','10M3':'10M3','13M3':'13M3','15M3':'15M3','17M3':'17M3','20M3':'20M3 Hayon',BENNE:'Benne',MINIBUS:'Minibus'};
+const DEF_BANKING={
+  BPGO:{date:'2025-10-01',rates:{'0.01':{24:null,36:2908.46,48:2229.5,60:1825.33,72:null},'0.05':{24:null,36:2803.73,48:2152.71,60:1765.37,72:null},'0.10':{24:null,36:2672.82,48:2056.72,60:1690.42,72:null}}},
+  CMB:{date:'2025-10-01',rates:{'0.01':{24:null,36:2927.1,48:2242.2,60:1813.15,72:null},'0.05':{24:null,36:2823.1,48:2165.7,60:1771.7,72:null},'0.10':{24:null,36:2693.1,48:2070.3,60:1697.1,72:null}}},
+  LCL:{date:'',rates:{'0.01':{24:null,36:null,48:null,60:null,72:null},'0.05':{24:null,36:null,48:null,60:null,72:null},'0.10':{24:null,36:null,48:null,60:null,72:null}}},
+  CA:{date:'',rates:{'0.01':{24:null,36:null,48:null,60:null,72:null},'0.05':{24:null,36:null,48:null,60:null,72:null},'0.10':{24:null,36:null,48:null,60:null,72:null}}},
+  CIC:{date:'',rates:{'0.01':{24:null,36:null,48:null,60:null,72:null},'0.05':{24:null,36:null,48:null,60:null,72:null},'0.10':{24:null,36:null,48:null,60:null,72:null}}},
+  CE:{date:'',rates:{'0.01':{24:null,36:null,48:null,60:null,72:null},'0.05':{24:null,36:null,48:null,60:null,72:null},'0.10':{24:null,36:null,48:null,60:null,72:null}}}
+};
+
+function ld(k,d){try{const v=localStorage.getItem('lx11_'+k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function sv(k,v){try{localStorage.setItem('lx11_'+k,JSON.stringify(v));}catch(e){}}
+function getB(){return ld('b',JSON.parse(JSON.stringify(DEF_BANKING)));}
+function getP(){return ld('p',{sh24:150,sb24:100,sh36:150,sb36:100,sh48:170,sb48:110,sh60:200,sb60:130,c48:1.10,c60:1.20});}
+function getC(){return ld('c',JSON.parse(JSON.stringify(DEF_COSTS)));}
+function getVO(){return ld('vo',{c1:0,c2:0.15,c3:0.30,c4:0.50});}
+
+function fE(v){if(v===null||v===undefined||isNaN(v))return '—';const a=Math.abs(v);const s=Math.round(a).toLocaleString('fr-FR')+' €';return v<0?'−'+s:s;}
+function fES(v){if(v===null||v===undefined||isNaN(v))return '—';const s=Math.round(Math.abs(v)).toLocaleString('fr-FR')+' €';return (v>0?'+':v<0?'−':'')+s;}
+
+// VN/VO State
+let vehicleType='VN';
+function setType(t){
+  vehicleType=t;
+  sel('btn-vn').className='vn-vo-btn'+(t==='VN'?' active':'');
+  sel('btn-vo').className='vn-vo-btn'+(t==='VO'?' active':'');
+  const wrap=sel('vo-km-wrap');
+  if(wrap)wrap.className='vo-km-wrap'+(t==='VO'?' show':'');
+  calc();
+}
+
+function getVOCoeff(kmDepart){
+  const vo=getVO();
+  if(kmDepart<=0)return 0;
+  if(kmDepart<=30000)return vo.c1||0;
+  if(kmDepart<=60000)return vo.c2||0.15;
+  if(kmDepart<=100000)return vo.c3||0.30;
+  return vo.c4||0.50;
+}
+
+function getVOCoeffLabel(kmDepart){
+  const c=getVOCoeff(kmDepart);
+  if(c===0)return null;
+  return '+'+Math.round(c*100)+'% VO';
+}
+
+function getDurCoeff(durC){
+  const p=getP();
+  if(durC<=36)return 1.00;
+  if(durC<=48)return p.c48||1.10;
+  return p.c60||1.20;
+}
+
+function getMonthSeuils(p,durC){
+  if(durC<=24)return{sh:p.sh24||150,sb:p.sb24||100};
+  if(durC<=36)return{sh:p.sh36||150,sb:p.sb36||100};
+  if(durC<=48)return{sh:p.sh48||170,sb:p.sb48||110};
+  return{sh:p.sh60||200,sb:p.sb60||130};
+}
+
+function dcC(mMens,p,durC){const s=getMonthSeuils(p,durC);return mMens>=s.sh?'g':mMens>=s.sb?'a':'r';}
+function dcL(mMens,p,durC){const s=getMonthSeuils(p,durC);return mMens>=s.sh?'DEAL RENTABLE':mMens>=s.sb?'LIMITE — A NEGOCIER':'A REFUSER';}
+
+function getAvgMens(vr,durFi,tf){
+  const data=getB();let sum=0,cnt=0;
+  BANKS.forEach(b=>{const r=data[b]&&data[b].rates[vr]&&data[b].rates[vr][durFi];if(r&&r>0){sum+=r;cnt++;}});
+  if(!cnt||!tf)return null;
+  return (sum/cnt/100000)*tf;
+}
+
+function getKmCostAdj(cat,durC,kmDepart){
+  const c=getC();
+  const base=c[cat]||DEF_COSTS[cat]||0.055;
+  const durCoeff=getDurCoeff(durC);
+  const voCoeff=vehicleType==='VO'?getVOCoeff(kmDepart):0;
+  return base*(durCoeff+voCoeff);
+}
+
+function compute(tf,vr,durFi,durC,km,loyer,revente,cat,kmDepart){
+  if(!tf||!loyer)return null;
+  const mens=getAvgMens(vr,durFi,tf);
+  if(!mens)return null;
+  const c=getC();
+  const kmCostBase=c[cat]||DEF_COSTS[cat]||0.055;
+  const durCoeff=getDurCoeff(durC);
+  const voCoeff=vehicleType==='VO'?getVOCoeff(kmDepart):0;
+  const kmCostAdj=kmCostBase*(durCoeff+voCoeff);
+  const totalKm=km*durC;
+  const coutUsage=totalKm*kmCostAdj;
+  const coutUsageMens=km*kmCostAdj;
+  const totalLoyer=loyer*durC;
+  const mensContrat=mens*durC;
+  const margeLocative=totalLoyer-mensContrat-coutUsage;
+  const margeLocativeMens=margeLocative/durC;
+  const margeBruteMens=loyer-mens;
+  const vnc=tf*parseFloat(vr);
+  const margeRevente=(revente>0)?revente-vnc:null;
+  const margeTotale=margeLocative+(margeRevente||0);
+  return{mens,coutUsage,coutUsageMens,kmCostBase,kmCostAdj,durCoeff,voCoeff,totalKm,
+    margeLocative,margeLocativeMens,margeBruteMens,margeNetteMens:margeLocativeMens,
+    margeLeasingMens:margeLocativeMens,margeRevente,vnc,margeTotale,
+    totalLoyer,mensContrat,tf};
+}
+
+function inputs(){
+  return{
+    prix:parseFloat(sel('prix')&&sel('prix').value)||0,
+    opts:parseFloat(sel('options')&&sel('options').value)||0,
+    cat:sel('cat')?sel('cat').value:'4M3',
+    durC:parseInt(sel('dur-c')?sel('dur-c').value:36),
+    km:parseFloat(sel('km')&&sel('km').value)||0,
+    loyer:parseFloat(sel('loyer')&&sel('loyer').value)||0,
+    revente:parseFloat(sel('revente')&&sel('revente').value)||0,
+    kmDepart:parseFloat(sel('km-depart')&&sel('km-depart').value)||0,
+  };
+}
+
+let selDurFi=null,selVR=null;
+
+function calc(){
+  const i=inputs();
+  const p=getP();
+  const tf=i.prix+i.opts;
+  const e=sel('tf');if(e)e.textContent=tf>0?fE(tf):'—';
+
+  // VO validation
+  if(vehicleType==='VO'){
+    const warn=sel('vo-warn');
+    const valid=i.kmDepart>0;
+    if(warn)warn.className='vo-warn'+(valid?'':' show');
+    // VO coeff badge
+    const badge=sel('vo-coeff-badge');
+    if(badge){
+      const lbl=getVOCoeffLabel(i.kmDepart);
+      if(lbl&&valid){badge.textContent=lbl;badge.style.display='inline-block';}
+      else badge.style.display='none';
+    }
+    if(!valid){
+      clearPanel();
+      buildFinTable(i,p,tf,false);
+      buildMgTable(i,p,tf,false);
+      return;
+    }
+  }
+
+  // Coeff note
+  const coeff=getDurCoeff(i.durC);
+  const voC=vehicleType==='VO'?getVOCoeff(i.kmDepart):0;
+  const cn=sel('coeff-note');
+  if(cn){
+    let note='';
+    if(coeff>1)note+=`Coeff. durée ×${coeff.toFixed(2)}`;
+    if(voC>0)note+=(note?' · ':'')+`Coeff. VO +${Math.round(voC*100)}%`;
+    cn.textContent=note||'Pas de coefficient durée (≤ 36 mois)';
+  }
+
+  buildFinTable(i,p,tf,true);
+  if(tf>0&&i.loyer>0)buildMgTable(i,p,tf,true);
+  else{const mb=sel('mg-body');if(mb)mb.innerHTML='<tr><td colspan="4" style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Saisissez le loyer cible pour voir les marges</td></tr>';}
+
+  if(selDurFi&&selVR){
+    const r=compute(tf,selVR,selDurFi,i.durC,i.km,i.loyer,i.revente,i.cat,i.kmDepart);
+    updatePanel(i,r,p);
+    updateRecap(i,r,p);
+  } else clearPanel();
+  updatePrintMeta();
+}
+
+function buildFinTable(i,p,tf,hasData){
+  const tb=sel('fin-body');if(!tb)return;
+  tb.innerHTML='';
+  DUR_FI.forEach(durFi=>{
+    const tr=document.createElement('tr');
+    const td0=document.createElement('td');td0.className='dur-c';td0.textContent=durFi+' mois';tr.appendChild(td0);
+    VRS.forEach(vr=>{
+      const td=document.createElement('td');
+      if(!tf||!hasData){td.innerHTML='<div class="fc" style="color:var(--text3);padding:8px 10px">—</div>';}
+      else{
+        const r=compute(tf,vr,durFi,i.durC,i.km,i.loyer,i.revente,i.cat,i.kmDepart);
+        if(!r){td.innerHTML='<div class="fc" style="color:var(--text3);padding:8px 10px">N/D</div>';}
+        else{
+          const ur=i.loyer>0?r.coutUsageMens/i.loyer:0;
+          const uc=ur>0.25?'hi':ur>0.15?'warn':'';
+          let extra='';
+          if(r.durCoeff>1)extra+=`<span class="fc-coeff">Durée ×${r.durCoeff.toFixed(2)}</span>`;
+          if(r.voCoeff>0)extra+=`<span class="fc-coeff" style="color:var(--amber)">VO +${Math.round(r.voCoeff*100)}%</span>`;
+          const isSel=selDurFi===durFi&&selVR===vr;
+          td.innerHTML=`<div class="fc${isSel?' sel':''}"><span class="fc-mens">${fE(r.mens)}/mois</span><span class="fc-usage ${uc}">Usage: ${fE(r.coutUsageMens)}/mois</span>${extra}</div>`;
+        }
+      }
+      const fc=td.querySelector('.fc');
+      if(fc)fc.onclick=()=>selectScen(durFi,vr);
+      tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+}
+
+function buildMgTable(i,p,tf,hasData){
+  const tb=sel('mg-body');if(!tb)return;
+  tb.innerHTML='';
+  const durC=i.durC;
+  const seuils=getMonthSeuils(p,durC);
+  DUR_FI.forEach(durFi=>{
+    const tr=document.createElement('tr');
+    const td0=document.createElement('td');td0.className='dur-c';td0.textContent=durFi+' mois';tr.appendChild(td0);
+    VRS.forEach(vr=>{
+      const td=document.createElement('td');
+      if(!tf||!hasData){td.innerHTML='<div class="mc nd" style="padding:8px 10px">—</div>';}
+      else{
+        const r=compute(tf,vr,durFi,durC,i.km,i.loyer,i.revente,i.cat,i.kmDepart);
+        if(!r){td.innerHTML='<div class="mc nd" style="padding:8px 10px">N/D</div>';}
+        else{
+          const cls=dcC(r.margeLocativeMens,p,durC);
+          const isSel=selDurFi===durFi&&selVR===vr;
+          td.innerHTML=`<div class="mc ${cls}${isSel?' sel':''}"><span class="mc-gross">${fE(r.margeBruteMens)}</span><span class="mc-lbl">Hors usage</span><span class="mc-net">${fE(r.margeLocativeMens)}</span><span class="mc-lbl">Nette/mois</span></div>`;
+        }
+      }
+      const mc=td.querySelector('.mc');
+      if(mc)mc.onclick=()=>selectScen(durFi,vr);
+      tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+}
+
+function selectScen(durFi,vr){
+  selDurFi=durFi;selVR=vr;
+  const i=inputs();const p=getP();const tf=i.prix+i.opts;
+  buildFinTable(i,p,tf,true);
+  if(i.loyer>0)buildMgTable(i,p,tf,true);
+  const r=compute(tf,vr,durFi,i.durC,i.km,i.loyer,i.revente,i.cat,i.kmDepart);
+  updatePanel(i,r,p);updateRecap(i,r,p);
+}
+
+function updatePanel(i,r,p){
+  if(!r){clearPanel();return;}
+  const dc=dcC(r.margeLocativeMens,p,i.durC);
+  const ban=sel('decision');if(ban)ban.className='decision '+dc;
+  setT('d-title',dcL(r.margeLocativeMens,p,i.durC)+' — fi. '+selDurFi+' mois · '+VR_LBL[selVR]);
+  setT('d-sub','Marge nette: '+fE(r.margeLocativeMens)+'/mois · Seuil '+i.durC+'m: '+fE(getMonthSeuils(p,i.durC).sh)+'/mois');
+  const _s=getMonthSeuils(p,i.durC);
+  setT('d-right','Seuils '+i.durC+'m: '+fE(_s.sh)+' / '+fE(_s.sb));
+  const sk=(id,v,cls)=>{const e=sel(id);if(e){e.textContent=v;e.className='kpi-val '+(cls||'');}};
+  sk('k-lease',fE(r.margeLocativeMens)+'/mois',dc);
+  if(r.margeRevente!==null){sk('k-revente',fE(r.margeRevente),r.margeRevente>=0?'g':'r');}
+  else{const e=sel('k-revente');if(e){e.textContent='Non renseigné';e.className='kpi-val na';}}
+  sk('k-total',fE(r.margeTotale),r.margeTotale>=0?'g':'r');
+  setT('r-mens',fE(r.mens)+'/mois');
+  const re=sel('r-cout');if(re)re.textContent='- '+fE(r.coutUsage);
+  let cdet=Math.round(r.totalKm).toLocaleString('fr-FR')+' km × '+r.kmCostAdj.toFixed(3)+' €/km';
+  if(r.voCoeff>0)cdet+=' (VO +'+Math.round(r.voCoeff*100)+'%)';
+  setT('r-cout-det',cdet);
+  const lel=sel('r-lease-hl');
+  if(lel){lel.textContent=fE(r.margeLocative)+' ('+fE(r.margeLocativeMens)+'/mois)';lel.style.color=dc==='g'?'var(--green2)':dc==='a'?'var(--amber)':'var(--red)';}
+  setT('r-lease-sub',fE(r.totalLoyer)+' loyers - '+fE(r.mensContrat)+' mensualites - '+fE(r.coutUsage)+' cout usage');
+  setT('r-vnc',fE(r.vnc));
+  if(r.margeRevente!==null){const e=sel('r-rev');if(e){e.textContent=fES(r.margeRevente);e.className='rv '+(r.margeRevente>=0?'pos':'neg');}}
+  else{const e=sel('r-rev');if(e){e.textContent='Non renseigne';e.className='rv na';}}
+  const tot=sel('r-total-hl');
+  if(tot){tot.textContent=fE(r.margeTotale);tot.style.color=r.margeTotale>=0?'var(--black)':'var(--red)';}
+  setT('r-total-sub',r.margeRevente!==null?'Flux locatif ('+fE(r.margeLocative)+') + revente ('+fES(r.margeRevente)+')':'Renseignez le prix de revente');
+}
+
+function updateRecap(i,r,p){
+  const card=sel('recap');
+  if(!r){if(card)card.className='recap';return;}
+  if(card)card.className='recap show';
+  const dc=dcC(r.margeLocativeMens,p,i.durC);
+  const lbl={g:'RENTABLE',a:'LIMITE',r:'A REFUSER'}[dc];
+  setT('rc-title','Recapitulatif — Fi. '+selDurFi+'m · '+VR_LBL[selVR]+' · Contrat '+i.durC+'m');
+  const b=sel('rc-badge');if(b){b.textContent=lbl;b.className='rc-badge '+dc;}
+  setT('rc-mens',fE(r.mens)+'/mois');
+  const rc=sel('rc-cout');if(rc)rc.textContent='- '+fE(r.coutUsage);
+  const rl=sel('rc-lease');if(rl){rl.textContent=fE(r.margeLocative);rl.className='rk-val '+dc;}
+  const sig=sel('rc-signal');if(sig){sig.textContent=lbl;sig.className='rk-val '+dc;}
+  const mm=sel('rc-mg-mens');
+  if(mm){mm.textContent=fE(r.margeLocativeMens)+'/mois';mm.style.color=dc==='g'?'var(--green2)':dc==='a'?'var(--amber)':'var(--red)';}
+  const ma=sel('rc-mg-an');
+  if(ma){ma.textContent=fE(r.margeLocativeMens*12)+'/an';ma.style.color=dc==='g'?'var(--black)':dc==='a'?'var(--amber)':'var(--red)';}
+  // Identité
+  const client=sel('client')?sel('client').value:'';
+  const marque=sel('marque')?sel('marque').value:'';
+  const modele=sel('modele')?sel('modele').value:'';
+  const version=sel('version')?sel('version').value:'';
+  const vehicleLine=[marque,modele,version].filter(Boolean).join(' ');
+  setT('rc-client',client||'—');
+  setT('rc-vehicle',vehicleLine||'—');
+  setT('rc-type',vehicleType+(vehicleType==='VO'&&i.kmDepart>0?' ('+Math.round(i.kmDepart/1000)+'k km)':''));
+  setT('rc-tf',fE(r.tf));
+  setT('rc-vnc',fE(r.vnc));
+  setT('rc-loyer',fE(i.loyer));
+  setT('rc-durc',i.durC+' mois');
+  setT('rc-km',Math.round(r.totalKm).toLocaleString('fr-FR')+' km');
+  setT('rc-ekm',r.kmCostBase.toFixed(3)+(r.voCoeff>0?' +VO':'')+(r.durCoeff>1?' ×'+r.durCoeff.toFixed(2):'')+' = '+r.kmCostAdj.toFixed(3)+' €/km');
+  setT('rc-tloyer',fE(r.totalLoyer));
+  setT('rc-tmens',fE(r.mensContrat)+' ('+i.durC+' mois)');
+  setT('rc-cout2',fE(r.coutUsage));
+  // Reset revente input only if revente field is empty
+  const revInput=sel('rc-revente-input');
+  const revMainVal=sel('revente')?sel('revente').value:'';
+  if(revInput&&!revInput.value&&revMainVal){revInput.value=revMainVal;updateReventeRecap();}
+  else if(revInput&&!revMainVal&&!revInput.value){const rr=sel('rev-result');if(rr)rr.style.display='none';}
+}
+
+function clearPanel(){
+  setC('decision','decision none');
+  ['k-lease','k-revente','k-total'].forEach(id=>{const e=sel(id);if(e){e.textContent='—';e.className='kpi-val na';}});
+  setT('r-lease-sub','Selectionnez un scenario dans le tableau');
+  setT('r-total-sub','');
+  setC('recap','recap');
+}
+
+function syncRevente(){
+  const v=sel('revente')?sel('revente').value:'';
+  const ri=sel('rc-revente-input');
+  if(ri){ri.value=v;updateReventeRecap();}
+}
+
+function updateReventeRecap(){
+  const ri=sel('rc-revente-input');
+  const revente=ri?parseFloat(ri.value)||0:0;
+  const rr=sel('rev-result');
+  if(!rr)return;
+  if(!revente||!selDurFi||!selVR){rr.style.display='none';return;}
+  const i=inputs();const tf=i.prix+i.opts;
+  if(!tf||!i.loyer){rr.style.display='none';return;}
+  const r=compute(tf,selVR,selDurFi,i.durC,i.km,i.loyer,0,i.cat,i.kmDepart);
+  if(!r){rr.style.display='none';return;}
+  rr.style.display='grid';
+  const vnc=tf*parseFloat(selVR);
+  const margeRev=revente-vnc;
+  const margeTot=r.margeLocative+margeRev;
+  const ve=sel('rv-rev');if(ve){ve.textContent=fES(margeRev);ve.style.color=margeRev>=0?'#6FB014':'#E84040';}
+  setT('rv-lease',fE(r.margeLocative));
+  const te=sel('rv-total');if(te){te.textContent=fE(margeTot);te.style.color=margeTot>=0?'#6FB014':'#E84040';}
+  setT('rv-vnc',fE(vnc));
+}
+
+function updatePrintMeta(){
+  const marque=sel('marque')?sel('marque').value:'';
+  const modele=sel('modele')?sel('modele').value:'';
+  const version=sel('version')?sel('version').value:'';
+  const vehicleLine=[marque,modele,version].filter(Boolean).join(' ')||'—';
+  setT('print-vehicle-line',vehicleLine);
+  setT('print-client',sel('client')?sel('client').value||'—':'—');
+  setT('print-date',new Date().toLocaleDateString('fr-FR'));
+}
+
+function doPrint(){
+  const recap=sel('recap');
+  if(recap&&!recap.classList.contains('show')){
+    alert("Selectionnez d'abord un scenario dans le tableau.");
+    return;
+  }
+  window.print();
+}
+
+// ── BANKING ──
+function buildBankingGrid(){
+  const grid=sel('banking-grid');if(!grid)return;
+  grid.innerHTML='';
+  const data=getB();
+  const vrs=[{k:'0.01',l:'VR 1 %'},{k:'0.05',l:'VR 5 %'},{k:'0.10',l:'VR 10 %'}];
+  BANKS.forEach(bank=>{
+    const bd=data[bank]||{date:'',rates:{}};
+    const stale=bd.date&&((new Date()-new Date(bd.date))/864e5)>90;
+    let rows='';
+    vrs.forEach(vr=>{
+      const rv=bd.rates[vr.k]||{};
+      rows+=`<tr><td class="vr-td">${vr.l}</td>${DUR_FI.map(d=>`<td><input type="number" step="0.01" placeholder="—" value="${rv[d]||''}" onchange="updateRate('${bank}','${vr.k}',${d},this.value)"></td>`).join('')}</tr>`;
+    });
+    const card=document.createElement('div');card.className='bank-card';
+    card.innerHTML=`<div class="bank-name">${bank}</div><div class="bank-dr"><label>Bareme du</label><input type="date" value="${bd.date||''}" onchange="updateDate('${bank}',this.value)"></div><div class="stale${stale?' show':''}" id="stale-${bank}">Potentiellement perime</div><table class="bt"><thead><tr><th class="vl">VR</th>${DUR_FI.map(d=>`<th>${d}m</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table><div style="font-size:10px;color:var(--text3);margin-top:5px">Mensualite pour 100 000 EUR HT</div>`;
+    grid.appendChild(card);
+  });
+}
+function updateRate(b,vr,dur,val){const data=getB();if(!data[b].rates[vr])data[b].rates[vr]={};data[b].rates[vr][dur]=val?parseFloat(val):null;sv('b',data);calc();}
+function updateDate(b,val){const data=getB();data[b].date=val;sv('b',data);}
+function resetBanking(){if(!confirm('Reinitialiser tous les baremes ?'))return;sv('b',JSON.parse(JSON.stringify(DEF_BANKING)));buildBankingGrid();calc();}
+
+// ── PARAMS ──
+function buildCatTable(){
+  const costs=getC();const tb=sel('cat-body');if(!tb)return;tb.innerHTML='';
+  Object.keys(DEF_COSTS).forEach(cat=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${CAT_LBL[cat]}</td><td style="font-family:var(--mono);color:var(--text3)">${DEF_COSTS[cat].toFixed(3)}</td><td><input type="number" step="0.001" min="0.01" max="0.5" value="${(costs[cat]||DEF_COSTS[cat]).toFixed(3)}" id="cost-${cat}" onchange="calc()"></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function updateCoeff(){
+  const _g=(id,d)=>{const e=sel(id);return e?parseFloat(e.value)||d:d;};
+  const c48=_g('c48',1.10),c60=_g('c60',1.20);
+  const e48=sel('c48-val'),e60=sel('c60-val');
+  if(e48)e48.textContent='× '+c48.toFixed(2);
+  if(e60)e60.textContent='× '+c60.toFixed(2);
+  calc();
+}
+
+function saveParams(){
+  const _g=(id,d)=>{const e=sel(id);return e?parseFloat(e.value)||d:d;};
+  const p={
+    sh24:_g('sh24',150),sb24:_g('sb24',100),sh36:_g('sh36',150),sb36:_g('sb36',100),
+    sh48:_g('sh48',170),sb48:_g('sb48',110),sh60:_g('sh60',200),sb60:_g('sb60',130),
+    c48:_g('c48',1.10),c60:_g('c60',1.20)
+  };
+  sv('p',p);
+  const vo={c1:_g('vo-c1',0),c2:_g('vo-c2',0.15),c3:_g('vo-c3',0.30),c4:_g('vo-c4',0.50)};
+  sv('vo',vo);
+  const nc={};Object.keys(DEF_COSTS).forEach(c=>{const e=sel('cost-'+c);nc[c]=e?parseFloat(e.value)||DEF_COSTS[c]:DEF_COSTS[c];});
+  sv('c',nc);
+  const m=sel('saved');if(m){m.style.display='inline';setTimeout(()=>{if(m)m.style.display='none';},2000);}
+  calc();
+}
+
+function resetCosts(){sv('c',JSON.parse(JSON.stringify(DEF_COSTS)));buildCatTable();calc();}
+
+function initParams(){
+  const p=getP();const vo=getVO();
+  const _set=(id,v)=>{const e=sel(id);if(e)e.value=v;};
+  _set('sh24',p.sh24||150);_set('sb24',p.sb24||100);
+  _set('sh36',p.sh36||150);_set('sb36',p.sb36||100);
+  _set('sh48',p.sh48||170);_set('sb48',p.sb48||110);
+  _set('sh60',p.sh60||200);_set('sb60',p.sb60||130);
+  _set('c48',p.c48||1.10);_set('c60',p.c60||1.20);
+  _set('vo-c1',vo.c1!==undefined?vo.c1:0);
+  _set('vo-c2',vo.c2!==undefined?vo.c2:0.15);
+  _set('vo-c3',vo.c3!==undefined?vo.c3:0.30);
+  _set('vo-c4',vo.c4!==undefined?vo.c4:0.50);
+  const e48=sel('c48-val'),e60=sel('c60-val');
+  if(e48)e48.textContent='× '+(p.c48||1.10).toFixed(2);
+  if(e60)e60.textContent='× '+(p.c60||1.20).toFixed(2);
+  buildCatTable();
+}
+
+function buildSimulateur(){
+  const i=inputs();
+  const p=getP();
+  const tf=i.prix+i.opts;
+  const noData=document.getElementById('sim-no-data');
+  const simTable=document.getElementById('sim-table');
+  const simNotif=document.getElementById('sim-notif');
+  const simBody=document.getElementById('sim-body');
+
+  if(!tf||!i.km||!i.cat){
+    if(noData)noData.style.display='block';
+    if(simTable)simTable.style.display='none';
+    if(simNotif)simNotif.className='notif-box';
+    return;
+  }
+  if(noData)noData.style.display='none';
+  if(simTable)simTable.style.display='table';
+  if(!simBody)return;
+  simBody.innerHTML='';
+
+  // Order: 36m VR1, 36m VR5, 36m VR10, 48m VR1, 48m VR5, 48m VR10, 60m VR1, 60m VR5, 60m VR10, 24m VR1...
+  const ORDER=[[36,'0.01'],[36,'0.05'],[36,'0.10'],[48,'0.01'],[48,'0.05'],[48,'0.10'],[60,'0.01'],[60,'0.05'],[60,'0.10'],[24,'0.01'],[24,'0.05'],[24,'0.10'],[72,'0.01'],[72,'0.05'],[72,'0.10']];
+  const VR_PCT={'0.01':'1%','0.05':'5%','0.10':'10%'};
+  const TARGET=150;
+  const loyer=i.loyer||0;
+
+  let firstOK=null;
+  let firstOKLoyer=null;
+  let rows=0;
+
+  ORDER.forEach(([durFi,vr])=>{
+    const mens=getAvgMens(vr,durFi,tf);
+    if(!mens)return;
+    rows++;
+    // Coût usage mensuel (basé sur durée contrat = durFi pour la simulation, ou durée contrat actuelle)
+    const durC=i.durC||36;
+    const kmCostAdj=getKmCostAdj(i.cat,durC,i.kmDepart||0);
+    const coutUsageMens=i.km*kmCostAdj;
+    // Loyer cible pour 150€ net
+    const loyerCible=mens+coutUsageMens+TARGET;
+    // Marge avec loyer actuel
+    const margeActuelle=loyer>0?loyer-mens-coutUsageMens:null;
+    const delta=loyer>0?loyer-loyerCible:null;
+    const ok=margeActuelle!==null&&margeActuelle>=TARGET;
+
+    if(ok&&firstOK===null){firstOK=durFi+'m VR'+VR_PCT[vr];firstOKLoyer=loyer;}
+
+    const tr=document.createElement('tr');
+    const scenLabel=durFi+'m VR'+VR_PCT[vr];
+
+    let margeCell='<span class="loyer-val">—</span>';
+    let cls='';
+    let deltaStr='';
+    if(margeActuelle!==null){
+      const mg=Math.round(margeActuelle);
+      if(mg>=TARGET){cls='loyer-ok';}
+      else if(mg>=TARGET*0.7){cls='loyer-warn';}
+      else{cls='loyer-ko';}
+      margeCell=`<span class="loyer-val">${fE(loyer)}/m</span><span class="loyer-needed">Marge: ${mg} €/mois</span>`;
+      const d=Math.round(loyer-loyerCible);
+      deltaStr=d>=0?`<span class="loyer-delta" style="color:var(--green2)">+${d} € — OK</span>`:`<span class="loyer-delta" style="color:var(--red)">-${Math.abs(d)} € — insuffisant</span>`;
+    }
+
+    tr.innerHTML=`<td class="lh">${scenLabel}</td>
+      <td><span class="loyer-val">${fE(mens)}/m</span><span class="loyer-needed">Usage: ${fE(coutUsageMens)}/m</span></td>
+      <td class="${cls}">${margeCell}</td>
+      <td><span class="loyer-val" style="color:var(--black)">${fE(loyerCible)}/m</span></td>
+      <td>${deltaStr||'<span style="color:var(--text3)">Loyer non renseigné</span>'}</td>`;
+    simBody.appendChild(tr);
+  });
+
+  if(rows===0){
+    if(noData)noData.style.display='block';
+    if(simTable)simTable.style.display='none';
+    if(simNotif)simNotif.className='notif-box';
+    return;
+  }
+
+  // Notification
+  if(simNotif){
+    if(firstOK){
+      simNotif.className='notif-box show green';
+      simNotif.textContent='Objectif 150 €/mois atteint avec le scenario : '+firstOK+' (loyer actuel '+fE(firstOKLoyer)+')';
+    } else if(loyer>0){
+      // Find best scenario
+      let bestLoyer=999999;
+      ORDER.forEach(([durFi,vr])=>{
+        const mens=getAvgMens(vr,durFi,tf);
+        if(!mens)return;
+        const durC=i.durC||36;
+        const kmCostAdj=getKmCostAdj(i.cat,durC,i.kmDepart||0);
+        const lc=mens+(i.km*kmCostAdj)+TARGET;
+        if(lc<bestLoyer)bestLoyer=lc;
+      });
+      simNotif.className='notif-box show';
+      simNotif.textContent='Aucun scenario n\'atteint 150 €/mois avec le loyer actuel ('+fE(loyer)+'). Loyer minimum recommande : '+fE(Math.round(bestLoyer))+'/mois pour le meilleur scenario.';
+    } else {
+      simNotif.className='notif-box show';
+      simNotif.textContent='Renseignez le loyer cible dans l\'onglet Cotation pour voir l\'ecart par scenario.';
+    }
+  }
+}
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  const ts=sel('tab-'+name);if(ts)ts.classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(name==='banking')buildBankingGrid();
+  if(name==='params')initParams();
+  if(name==='simulateur')buildSimulateur();
+}
+
+// ── INIT ──
+initParams();
+calc();
+updatePrintMeta();
+</script>
+</body>
+</html>
