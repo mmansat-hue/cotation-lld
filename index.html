@@ -737,12 +737,16 @@ function compute(tf,vr,durFi,durC,km,loyer,revente,cat,kmDepart){
   const margeLocative=totalLoyer-mensContrat-coutUsage;
   const margeLocativeMens=margeLocative/durC;
   const margeBruteMens=loyer-mens;
-  const vnc=tf*parseFloat(vr);
+  // VNC réelle = ce que Loxity doit encore à la banque à la sortie du contrat
+  // Si durFi > durC : il reste (durFi-durC) mensualités à payer après récupération du véhicule
+  const vncBanque=tf*parseFloat(vr); // VR% garanti en fin de financement
+  const mensRestantes=Math.max(0,durFi-durC);
+  const vnc=vncBanque+(mens*mensRestantes); // dette réelle banque à fin contrat
   const margeRevente=(revente>0)?revente-vnc:null;
   const margeTotale=margeLocative+(margeRevente||0);
   return{mens,coutUsage,coutUsageMens,kmCostBase,kmCostAdj,durCoeff,voCoeff,totalKm,
     margeLocative,margeLocativeMens,margeBruteMens,margeNetteMens:margeLocativeMens,
-    margeLeasingMens:margeLocativeMens,margeRevente,vnc,margeTotale,
+    margeLeasingMens:margeLocativeMens,margeRevente,vnc,vncBanque,mensRestantes,margeTotale,
     totalLoyer,mensContrat,tf};
 }
 
@@ -898,7 +902,12 @@ function updatePanel(i,r,p){
   const lel=sel('r-lease-hl');
   if(lel){lel.textContent=fE(r.margeLocative)+' ('+fE(r.margeLocativeMens)+'/mois)';lel.style.color=dc==='g'?'var(--green2)':dc==='a'?'var(--amber)':'var(--red)';}
   setT('r-lease-sub',fE(r.totalLoyer)+' loyers - '+fE(r.mensContrat)+' mensualites - '+fE(r.coutUsage)+' cout usage');
-  setT('r-vnc',fE(r.vnc));
+  const e_vnc=sel('r-vnc');
+  if(e_vnc){
+    const ms=Math.max(0,selDurFi-i.durC);
+    if(ms>0){e_vnc.textContent=fE(r.vnc)+' (VR '+fE(r.vncBanque)+' + '+ms+'m rest.)';}
+    else{e_vnc.textContent=fE(r.vnc);}
+  }
   if(r.margeRevente!==null){const e=sel('r-rev');if(e){e.textContent=fES(r.margeRevente);e.className='rv '+(r.margeRevente>=0?'pos':'neg');}}
   else{const e=sel('r-rev');if(e){e.textContent='Non renseigne';e.className='rv na';}}
   const tot=sel('r-total-hl');
@@ -932,7 +941,12 @@ function updateRecap(i,r,p){
   setT('rc-vehicle',vehicleLine||'—');
   setT('rc-type',vehicleType+(vehicleType==='VO'&&i.kmDepart>0?' ('+Math.round(i.kmDepart/1000)+'k km)':''));
   setT('rc-tf',fE(r.tf));
-  setT('rc-vnc',fE(r.vnc));
+  const rcvnc=sel('rc-vnc');
+  if(rcvnc){
+    const ms=Math.max(0,selDurFi-i.durC);
+    if(ms>0){rcvnc.textContent=fE(r.vnc)+' (dont '+fE(r.mensRestantes*r.mens)+' mens. rest.)';}
+    else{rcvnc.textContent=fE(r.vnc);}
+  }
   setT('rc-loyer',fE(i.loyer));
   setT('rc-durc',i.durC+' mois');
   setT('rc-km',Math.round(r.totalKm).toLocaleString('fr-FR')+' km');
@@ -972,13 +986,12 @@ function updateReventeRecap(){
   const r=compute(tf,selVR,selDurFi,i.durC,i.km,i.loyer,0,i.cat,i.kmDepart);
   if(!r){rr.style.display='none';return;}
   rr.style.display='grid';
-  const vnc=tf*parseFloat(selVR);
-  const margeRev=revente-vnc;
+  const margeRev=revente-r.vnc;
   const margeTot=r.margeLocative+margeRev;
   const ve=sel('rv-rev');if(ve){ve.textContent=fES(margeRev);ve.style.color=margeRev>=0?'#6FB014':'#E84040';}
   setT('rv-lease',fE(r.margeLocative));
   const te=sel('rv-total');if(te){te.textContent=fE(margeTot);te.style.color=margeTot>=0?'#6FB014':'#E84040';}
-  setT('rv-vnc',fE(vnc));
+  setT('rv-vnc',fE(r.vnc));
 }
 
 function updatePrintMeta(){
